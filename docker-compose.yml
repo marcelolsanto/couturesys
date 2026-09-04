@@ -32,7 +32,7 @@ services:
       - media_volume:/app/media
       - static_volume:/app/staticfiles
     ports:
-      - "8000:8000"
+      - "${WEB_PORT:-8001}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +43,7 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-admin1234}
       - DEBUG=${DEBUG:-True}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web,100.95.28.45,192.168.1.13,*}
       - SECRET_KEY=${SECRET_KEY:-django-insecure-chave-docker-padrao}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}

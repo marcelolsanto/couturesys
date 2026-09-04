@@ -53,3 +53,4 @@ raio_x_projeto.txt
 
 # Scripts de setup locais
 setup_github.ps1
+actions-runner/
