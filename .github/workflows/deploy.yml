@@ -1,0 +1,39 @@
+name: CI/CD CoutureSys Homeserver
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Homeserver
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Prepare Environment and Deploy
+        run: |
+          # Garante que o arquivo .env existe no workspace do runner
+          if [ ! -f .env ]; then
+            if [ -f /home/$USER/Documentos/PycharmProjects/couturesys/.env ]; then
+              cp /home/$USER/Documentos/PycharmProjects/couturesys/.env .env
+            elif [ -f .env.example ]; then
+              cp .env.example .env
+            else
+              touch .env
+            fi
+          fi
+
+          echo "🚀 Construindo e iniciando containers CoutureSys..."
+          docker compose down || true
+          docker compose up -d --build --force-recreate
+
+          echo "⏳ Aguardando subida e healthcheck dos serviços..."
+          sleep 8
+          docker compose ps
+
+          echo "✅ CoutureSys atualizado e rodando com sucesso no Homeserver na porta 8001!"
