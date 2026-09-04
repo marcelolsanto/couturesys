@@ -30,9 +30,11 @@ couturesys/
 ├── financeiro/      # App Financeiro (Dashboard, Contas, Simulador)
 ├── juridico/        # App de Contratos
 ├── static/          # Arquivos estáticos (JS)
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
+├── Dockerfile       # Receita de construção da imagem do container
+├── docker-compose.yml # Orquestração do app + PostgreSQL
+├── .dockerignore    # Arquivos ignorados no build da imagem
+├── entrypoint.sh    # Script de inicialização (espera DB + migrações)
+├── requirements.txt # Dependências Python
 └── .env.example     # Template de variáveis de ambiente
 ```
 

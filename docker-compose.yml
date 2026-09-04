@@ -3,39 +3,55 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
+    container_name: couturesys_db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin1234
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin1234}
+      POSTGRES_DB: ${DB_NAME:-couturesys_db}
     ports:
-      - "5433:5432"  # <-- Mude apenas o número da esquerda!
+      - "${DB_PORT_EXTERNAL:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-couturesys_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   web:
     build:
       context: .
-      network: host
-    command: >
-      sh -c "python manage.py makemigrations &&
-             python manage.py migrate &&
-             python seed_data.py &&
-             python manage.py runserver 0.0.0.0:8000"
+      dockerfile: Dockerfile
+    container_name: couturesys_web
+    restart: unless-stopped
+    # Para desenvolvimento com recarregamento automático (hot-reload), descomente a linha abaixo:
+    # command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
     ports:
-      - "8001:8000"
+      - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DB_HOST=db
-      - DB_NAME=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=admin1234
       - DB_PORT=5432
-      # Caso use as IAs do producao/ai_service.py, coloque suas chaves aqui:
-      # - GEMINI_API_KEY=sua_chave_aqui
-      # - OPENAI_API_KEY=sua_chave_aqui
+      - DB_NAME=${DB_NAME:-couturesys_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-admin1234}
+      - DEBUG=${DEBUG:-True}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-chave-docker-padrao}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
 
 volumes:
   postgres_data:
+    name: couturesys_postgres_data
+  media_volume:
+    name: couturesys_media_data
+  static_volume:
+    name: couturesys_static_data

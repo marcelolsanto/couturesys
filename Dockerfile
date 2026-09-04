@@ -1,31 +1,38 @@
-# Usa uma imagem oficial e enxuta do Python 3.12
+# ==============================================================================
+# Dockerfile — CoutureSys
+# ==============================================================================
 FROM python:3.12-slim
 
-# Define variáveis de ambiente para otimizar o Python
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Otimizações de execução do Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Define o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-# Instala as dependências do sistema necessárias para o Cairo (geração de PDF) e PostgreSQL
-# O 'rm -rf' no final limpa o cache do apt para manter a imagem com baixo consumo de RAM
-RUN apt-get update && apt-get install -y \
-    pkg-config \
-    libcairo2-dev \
-    libpq-dev \
+# Dependências do sistema para compilação, PostgreSQL e geração de PDF (Cairo)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    libpq-dev \
+    libcairo2-dev \
+    pkg-config \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia os requisitos e instala as dependências do Python
+# Instalação das dependências Python com cache de camadas
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copia todo o código do projeto para o contêiner
+# Script de entrada para espera de banco e migrações
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Copia o restante do código-fonte do projeto
 COPY . /app/
 
-# Expõe a porta que o Django vai rodar
 EXPOSE 8000
 
-# Comando padrão para iniciar o servidor
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Comando padrão em produção utilizando Gunicorn
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]

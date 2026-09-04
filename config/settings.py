@@ -115,11 +115,14 @@ THOUSAND_SEPARATOR = '.'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-
-# Busca arquivos estáticos na pasta raiz do projeto
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (Uploads: Croquis, Contratos PDF, Comprovantes)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Chaves de API para serviços de IA (lidas do .env)
 GEMINI_API_KEY = config('GEMINI_API_KEY', default=None)

@@ -1,0 +1,55 @@
+# ==============================================================================
+# Docker Ignore - CoutureSys
+# ==============================================================================
+
+# Git
+.git
+.gitignore
+
+# Ambientes Virtuais e Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Arquivos de Ambiente e Segredos (NUNCA levar para o build da imagem!)
+.env
+.env.*
+!.env.example
+
+# IDEs e Editores
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Arquivos estáticos gerados e uploads
+staticfiles/
+media/
+croquis/
+financeiro/comprovantes/
+Contrato_*.pdf
+raio_x_projeto.txt
+*.log
+
+# Scripts de setup locais
+setup_github.ps1
