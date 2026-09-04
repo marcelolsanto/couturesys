@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .section-title { font-size: 0.85rem; font-weight: 700; color: #6c757d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; }
+        .card-calc { border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-radius: 12px; }
+        .input-group-text { background: #f8f9fa; border: 1px solid #ced4da; font-weight: 600; font-size: 0.9rem; }
+        .financial-bar { height: 30px; border-radius: 8px; overflow: hidden; display: flex; background: #e9ecef; margin-top: 10px; }
+        .bar-segment { display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold; transition: width 0.3s ease; }
+
+        /* Estilos do Card de Cliente */
+        .client-card { background: #fff; border: 1px solid #e9ecef; border-left: 4px solid #0d6efd; padding: 15px; margin-bottom: 10px; border-radius: 8px; transition: all 0.2s; }
+        .client-card:hover { transform: translateX(5px); border-color: #0d6efd; box-shadow: 0 2px 8px rgba(13, 110, 253, 0.1); }
+        .client-name { font-weight: bold; color: #333; font-size: 1.1rem; }
+        .client-info { font-size: 0.9rem; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4 mb-5">
+    <form method="POST" id="formPedido">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="card card-calc mb-4">
+                    <div class="card-body">
+                        <h4 class="text-primary mb-4"><i class="fas fa-file-invoice"></i> {{ titulo }}</h4>
+
+                        <div class="section-title"><i class="fas fa-user"></i> Cliente</div>
+
+                        <div style="display:none;">{{ form.cliente }}</div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-success text-white"><i class="fas fa-check"></i></span>
+                            <input type="text" id="clienteSelecionadoDisplay" class="form-control fw-bold text-success"
+                                   placeholder="Nenhum cliente selecionado" readonly>
+                        </div>
+
+                        <div class="search-box mb-3 p-3 bg-light rounded">
+                            <label class="small text-muted mb-2">Localizar Cliente na Base:</label>
+                            <div class="input-group">
+                                <input type="text" id="inputBusca" class="form-control"
+                                       placeholder="Digite nome ou CPF..."
+                                       value="{{ search_query|default:'' }}"
+                                       onkeypress="if(event.keyCode==13){ pesquisarCliente(); return false; }">
+                                <button type="button" class="btn btn-primary" onclick="pesquisarCliente()">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+
+                        {% if clientes %}
+                            <div class="mb-4">
+                                <small class="text-muted d-block mb-2">Resultados da busca:</small>
+
+                                {% for cliente in clientes %}
+                                <div class="client-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="client-name">{{ cliente.nome }}</div>
+                                            <div class="client-info">
+                                                <i class="fas fa-phone-alt"></i> {{ cliente.telefone }}
+                                                {% if cliente.cpf %} | <i class="fas fa-id-card"></i> {{ cliente.cpf }}{% endif %}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold"
+                                                    onclick="selecionarCliente('{{ cliente.id }}', '{{ cliente.nome }}')">
+                                                Selecionar <i class="fas fa-arrow-up"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+                        {% elif search_query %}
+                            <div class="alert alert-warning small">
+                                <i class="fas fa-user-slash"></i> Nenhum cliente encontrado para "{{ search_query }}".
+                                <a href="{% url 'cadastrar_cliente' %}" target="_blank" class="fw-bold">Cadastrar Novo?</a>
+                            </div>
+                        {% endif %}
+
+                        <div class="section-title mt-4"><i class="fas fa-tshirt"></i> Produto & Produção</div>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label small text-muted">Descrição do Pedido</label>
+                                {{ form.observacoes }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Quantidade (Peças)</label>
+                                <input type="number" id="qtdPecas" name="quantidade" class="form-control" value="1"
+                                       min="1" oninput="calcularFinanceiro()">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Horas de Confecção (Total)</label>
+                                <div class="input-group">
+                                    <input type="number" id="qtdHoras" class="form-control" step="0.5" value="0"
+                                           oninput="calcularFinanceiro()">
+                                    <span class="input-group-text">h</span>
+                                </div>
+                                <small class="text-muted" style="font-size: 11px;">Custo Hora: R$ <span
+                                        id="lblCustoHora">{{ custo_hora }}</span></small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary border-dashed"
+                                    onclick="alert('Funcionalidade de Estoque aqui...')">
+                                <i class="fas fa-plus-circle"></i> Adicionar Ficha Técnica
+                            </button>
+                        </div>
+
+                        <div class="section-title mt-4"><i class="fas fa-truck-loading"></i> Custos Operacionais</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small">Custo Materiais</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" id="custoMateriais" class="form-control" value="0" step="0.01"
+                                           oninput="calcularFinanceiro()">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Valor Frete</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" id="custoFrete" class="form-control" value="0" step="0.01"
+                                           oninput="calcularFinanceiro()">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Rateio/Fixo</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" id="custoRateio" class="form-control" value="0" step="0.01"
+                                           oninput="calcularFinanceiro()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Prazo Entrega</label>
+                                {{ form.prazo_entrega }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Status Inicial</label>
+                                {{ form.status }}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card card-calc bg-white border-primary" style="position: sticky; top: 20px;">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        <i class="fas fa-calculator"></i> Precificação Inteligente
+                    </div>
+                    <div class="card-body">
+
+                        <label class="form-label fw-bold">Valor Sugerido do Contrato</label>
+                        <div class="input-group input-group-lg mb-2">
+                            <span class="input-group-text bg-white">R$</span>
+                            {{ form.valor_total }}
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="small text-muted">Desconto (%)</label>
+                                <input type="number" id="descPorc" class="form-control form-control-sm" value="0"
+                                       oninput="aplicarDesconto('pct')">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted">Sinal/Entrada (R$)</label>
+                                {{ form.valor_sinal }}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="small fw-bold text-muted text-uppercase">Para onde vai o dinheiro?</h6>
+
+                        <div class="d-flex justify-content-between text-muted small mt-2">
+                            <span>Custos Totais:</span>
+                            <span id="txtCustoTotal">R$ 0,00</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold mt-1" style="font-size: 1.1rem;">
+                            <span>Lucro Líquido:</span>
+                            <span id="txtLucro" class="text-success">R$ 0,00</span>
+                        </div>
+
+                        <div class="financial-bar shadow-sm">
+                            <div id="barMat" class="bar-segment bg-secondary" style="width: 0%" title="Materiais">MAT
+                            </div>
+                            <div id="barMO" class="bar-segment bg-info" style="width: 0%" title="Mão de Obra">MO</div>
+                            <div id="barFrete" class="bar-segment bg-warning text-dark" style="width: 0%"
+                                 title="Frete/Rateio">OP
+                            </div>
+                            <div id="barLucro" class="bar-segment bg-success" style="width: 0%" title="Lucro">LUCRO
+                            </div>
+                        </div>
+                        <div class="text-end mt-1">
+                            <small class="text-muted">Margem: <span id="txtMargem" class="fw-bold">0%</span></small>
+                        </div>
+
+                        <div id="alertPrejuizo" class="alert alert-danger mt-3 py-2 small fw-bold text-center"
+                             style="display:none;">
+                            <i class="fas fa-exclamation-triangle"></i> PREÇO ABAIXO DO CUSTO!
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg shadow">
+                                <i class="fas fa-check-circle"></i> FINALIZAR PEDIDO
+                            </button>
+                            <a href="{% url 'lista_pedidos' %}" class="btn btn-light">Cancelar</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Configurações
+    const CUSTO_HORA = parseFloat("{{ custo_hora }}".replace(',', '.'));
+    const TAXA_IMPOSTO = parseFloat("{{ taxa_imposto }}".replace(',', '.'));
+
+    // Elementos DOM
+    const elValorTotal = document.getElementById('id_valor_total');
+    const elSinal = document.getElementById('id_valor_sinal');
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+        elValorTotal.classList.add('form-control', 'fw-bold', 'text-end');
+        elSinal.classList.add('form-control', 'form-control-sm');
+        elValorTotal.addEventListener('input', calcularFinanceiro);
+
+        // Verifica se já tem cliente selecionado (edição)
+        const selectCliente = document.getElementById('id_cliente');
+        if(selectCliente.value && selectCliente.options[selectCliente.selectedIndex]){
+             document.getElementById('clienteSelecionadoDisplay').value = selectCliente.options[selectCliente.selectedIndex].text;
+        }
+
+        calcularFinanceiro();
+    });
+
+    // --- FUNÇÕES DE BUSCA E SELEÇÃO ---
+
+    function pesquisarCliente() {
+        const query = document.getElementById('inputBusca').value;
+        // Recarrega a página passando o parâmetro q.
+        // Nota: Isso reseta os campos não salvos. Em UX ideal seria via AJAX,
+        // mas esta é a forma mais simples em Django Puro.
+        window.location.href = '?q=' + encodeURIComponent(query);
+    }
+
+    function selecionarCliente(id, nome) {
+        // Preenche o Select Oculto do Django
+        const select = document.getElementById('id_cliente');
+        select.value = id;
+
+        // Preenche o campo visual
+        document.getElementById('clienteSelecionadoDisplay').value = nome;
+
+        // Limpa a busca visualmente para focar no pedido
+        document.getElementById('inputBusca').value = '';
+
+        // Opcional: Rolar para baixo suavemente
+        document.getElementById('qtdPecas').focus();
+    }
+
+    // --- CÁLCULOS FINANCEIROS (Mantidos do anterior) ---
+
+    function aplicarDesconto() {
+        const valorAtual = parseFloat(elValorTotal.value) || 0;
+        const pct = parseFloat(document.getElementById('descPorc').value) || 0;
+        const novoValor = valorAtual * (1 - (pct/100));
+        // Aqui você poderia atualizar o valor, mas cuidado para não sobrescrever input manual
+        // Vamos apenas recalcular as métricas
+        calcularFinanceiro();
+    }
+
+    function calcularFinanceiro() {
+        const qtd = parseFloat(document.getElementById('qtdPecas').value) || 1;
+        const horas = parseFloat(document.getElementById('qtdHoras').value) || 0;
+        const custoMat = parseFloat(document.getElementById('custoMateriais').value) || 0;
+        const frete = parseFloat(document.getElementById('custoFrete').value) || 0;
+        const rateio = parseFloat(document.getElementById('custoRateio').value) || 0;
+        let receitaBruta = parseFloat(elValorTotal.value) || 0;
+
+        // Cálculos
+        const totalMO = horas * CUSTO_HORA;
+        const totalMat = custoMat;
+        const totalOp = frete + rateio;
+        const custoImpostos = receitaBruta * TAXA_IMPOSTO;
+        const custoTotalOperacao = totalMO + totalMat + totalOp + custoImpostos;
+        const lucroLiquido = receitaBruta - custoTotalOperacao;
+        let margem = 0;
+        if (receitaBruta > 0) margem = (lucroLiquido / receitaBruta) * 100;
+
+        // Interface
+        const fmt = (v) => v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        document.getElementById('txtCustoTotal').innerText = fmt(custoTotalOperacao);
+        const elLucro = document.getElementById('txtLucro');
+        elLucro.innerText = fmt(lucroLiquido);
+        document.getElementById('txtMargem').innerText = margem.toFixed(1) + '%';
+
+        // Gráfico
+        if (receitaBruta > 0) {
+            let pctMat = (totalMat / receitaBruta) * 100;
+            let pctMO = (totalMO / receitaBruta) * 100;
+            let pctOp = ((totalOp + custoImpostos) / receitaBruta) * 100;
+            let pctLucro = (lucroLiquido / receitaBruta) * 100;
+
+            if (pctLucro < 0) {
+                pctLucro = 0;
+                document.getElementById('alertPrejuizo').style.display = 'block';
+                elLucro.classList.replace('text-success', 'text-danger');
+            } else {
+                document.getElementById('alertPrejuizo').style.display = 'none';
+                elLucro.classList.replace('text-danger', 'text-success');
+            }
+
+            document.getElementById('barMat').style.width = pctMat + '%';
+            document.getElementById('barMO').style.width = pctMO + '%';
+            document.getElementById('barFrete').style.width = pctOp + '%';
+            document.getElementById('barLucro').style.width = pctLucro + '%';
+        }
+    }
+</script>
+
+</body>
+</html>

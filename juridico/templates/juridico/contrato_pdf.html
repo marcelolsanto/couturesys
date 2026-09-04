@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Helvetica, sans-serif; font-size: 12px; line-height: 1.5; color: #000; }
+        h1 { text-align: center; font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
+        .clause { margin-bottom: 15px; text-align: justify; }
+        .clause-title { font-weight: bold; margin-bottom: 5px; text-decoration: underline; }
+        .highlight { font-weight: bold; }
+        .signature-box { margin-top: 50px; display: flex; justify-content: space-between; }
+        .sign-line { width: 45%; border-top: 1px solid #000; text-align: center; padding-top: 5px; margin-top: 40px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <h1>CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE CONFECÇÃO</h1>
+
+    <div class="clause">
+        <span class="clause-title">CONTRATADA:</span><br>
+        <strong>{{ nome_atelier }}</strong>, doravante denominada CONTRATADA.
+    </div>
+
+    <div class="clause">
+        <span class="clause-title">CONTRATANTE:</span><br>
+        <strong>{{ cliente.nome }}</strong>, inscrito(a) no CPF sob o nº {{ cliente.cpf }}, residente e domiciliado(a) em {{ cliente.endereco }}, doravante denominado(a) CONTRATANTE.
+    </div>
+
+    <div class="clause">
+        <span class="clause-title">CLÁUSULA 1 - DO OBJETO</span><br>
+        O presente contrato tem por objeto a prestação de serviços de confecção sob medida, conforme especificações abaixo:
+        <br><br>
+        <ul>
+            <li><strong>Objeto:</strong> {{ pedido.observacoes }}</li>
+            <li><strong>Quantidade Contratada:</strong> {{ qtd_pecas }} unidades (peças).</li>
+            <li><strong>Preço Unitário Médio:</strong> {{ preco_unitario_medio }}</li>
+            <li><strong>Prazo de Entrega:</strong> {{ pedido.prazo_entrega|date:"d/m/Y" }}</li>
+        </ul>
+    </div>
+
+    <div class="clause">
+        <span class="clause-title">CLÁUSULA 2 - DO VALOR E FORMA DE PAGAMENTO</span><br>
+        Pela prestação dos serviços acima ajustados, o(a) CONTRATANTE pagará à CONTRATADA a importância total de <span class="highlight">{{ valor_total_contrato }}</span>.
+
+        <br><br>
+        <strong>Condições de Pagamento:</strong>
+        <ul>
+            <li>Sinal (Pago): {{ sinal_pago }}</li>
+            <li>Saldo Restante (Na Entrega): {{ restante_pagar }}</li>
+        </ul>
+    </div>
+
+    <div class="clause">
+        <span class="clause-title">CLÁUSULA 3 - DA ENTREGA E PROVAS</span><br>
+        A CONTRATADA compromete-se a entregar as {{ qtd_pecas }} peças confeccionadas na data estipulada, ressalvados atrasos decorrentes de caso fortuito ou força maior, ou atrasos do(a) CONTRATANTE nas provas agendadas.
+    </div>
+
+    <div class="clause">
+        <span class="clause-title">CLÁUSULA 4 - DA DESISTÊNCIA</span><br>
+        Em caso de desistência por parte do(a) CONTRATANTE, o valor do sinal não será devolvido, servindo como cobertura de custos de materiais já adquiridos e reserva de horas de trabalho.
+    </div>
+
+    <br><br>
+    <p style="text-align: center;">Local e Data: __________________________, {{ data_emissao|date:"d/m/Y" }}</p>
+
+    <table style="width: 100%; margin-top: 50px;">
+    <tr>
+        <td style="width: 45%; border-top: 1px solid black; text-align: center;">
+            {{ nome_atelier }}<br>(Contratada)
+        </td>
+        <td style="width: 10%;"></td>
+        <td style="width: 45%; border-top: 1px solid black; text-align: center;">
+            {{ cliente.nome }}<br>(Contratante)
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    <div style="background: #fff3cd; padding: 15px; border: 1px solid #ffeeba; border-radius: 4px; margin-bottom: 20px; color: #856404;">
+        <strong>Financeiro:</strong> Selecione um ou mais registros abaixo e use o menu
+        <span style="font-weight: bold; color: #155724;">"Ações"</span>
+        para gerar as parcelas automaticamente.
+    </div>
+    {{ block.super }}
+{% endblock %}

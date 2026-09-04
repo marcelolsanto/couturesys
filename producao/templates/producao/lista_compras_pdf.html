@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Helvetica, sans-serif; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        h1 { margin: 0; color: #d35400; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #eee; text-align: left; padding: 8px; border-bottom: 1px solid #aaa; }
+        td { padding: 8px; border-bottom: 1px solid #ddd; }
+        .qtd-box { font-weight: bold; font-size: 14px; }
+        .footer { margin-top: 50px; font-size: 10px; color: #777; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ROTEIRO DE COMPRAS</h1>
+        <p>Suprimentos para o Pedido #{{ pedido.id }} - {{ pedido.cliente.nome }}</p>
+    </div>
+
+    {% if itens %}
+    <table>
+        <thead>
+            <tr>
+                <th>Material</th>
+                <th>Necessário</th>
+                <th>Estoque Atual</th>
+                <th>COMPRAR (Falta)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <td>{{ item.material }}</td>
+                <td>{{ item.necessario }} {{ item.unidade }}</td>
+                <td>{{ item.em_estoque }} {{ item.unidade }}</td>
+                <td style="color: red;">
+                    <span class="qtd-box">👉 {{ item.falta_comprar }} {{ item.unidade }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div style="text-align: center; padding: 50px; color: green;">
+            <h3>✅ Nenhum item faltante!</h3>
+            <p>O estoque atual cobre toda a produção deste pedido.</p>
+        </div>
+    {% endif %}
+
+    <div class="footer">
+        Gerado pelo CoutureSys em {{ data_emissao|date:"d/m/Y H:i" }}
+    </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin1234
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"  # <-- Mude apenas o número da esquerda!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      network: host
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python seed_data.py &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=admin1234
+      - DB_PORT=5432
+      # Caso use as IAs do producao/ai_service.py, coloque suas chaves aqui:
+      # - GEMINI_API_KEY=sua_chave_aqui
+      # - OPENAI_API_KEY=sua_chave_aqui
+
+volumes:
+  postgres_data:

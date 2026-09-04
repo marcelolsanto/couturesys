@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Desk | CoutureSys</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .card-metrics { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .bg-gradient-cost { background: linear-gradient(45deg, #e9ecef 0%, #dee2e6 100%); }
+        .progress-stacked { height: 25px; border-radius: 8px; overflow: hidden; display: flex; background: #e9ecef; }
+        .bar-segment { display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="fas fa-calculator text-primary"></i> Negociação & Custos</h3>
+        <span class="badge bg-dark">Ambiente Seguro</span>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <label class="fw-bold">Selecione o Pedido:</label>
+            <select id="selectPedido" class="form-select form-select-lg" onchange="carregarPedido()">
+                <option value="">-- Escolha --</option>
+                {% for p in pedidos %}
+                <option value="{{ p.id }}">Ped #{{ p.id }} - {{ p.cliente.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div id="painel" style="display:none;">
+
+        <div id="boxEstoque" class="alert alert-warning shadow-sm" style="display:none;">
+            <h6 class="fw-bold"><i class="fas fa-exclamation-triangle"></i> Atenção: Estoque Insuficiente!</h6>
+            <ul id="listaFaltantes" class="mb-0 small"></ul>
+            <small class="text-muted mt-2 d-block">Considere o tempo de compra do tecido no prazo de entrega.</small>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card card-metrics h-100">
+                    <div class="card-header bg-white fw-bold">Estrutura de Custos (Break-Even)</div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-cut text-muted"></i> Materiais/Tecido</span>
+                                <span class="fw-bold" id="txtMat">R$ 0,00</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-clock text-muted"></i> Costura/Mão de Obra</span>
+                                <span class="fw-bold" id="txtMO">R$ 0,00</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-truck text-muted"></i> Frete & Logística</span>
+                                <span class="fw-bold" id="txtFrete">R$ 0,00</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-university text-muted"></i> Taxas Adm/Impostos</span>
+                                <span class="fw-bold" id="txtTaxas">R$ 0,00</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between bg-light border-top border-2">
+                                <span class="text-danger fw-bold">PONTO DE EQUILÍBRIO</span>
+                                <span class="text-danger fw-bold" id="txtPontoEq">R$ 0,00</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card card-metrics h-100 border-primary">
+                    <div class="card-body">
+                        <h6 class="text-muted small fw-bold">PREÇO SUGERIDO (TABELA): <span id="txtPrecoTabela">R$ 0,00</span></h6>
+
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <label class="small">Aplicar Desconto (R$)</label>
+                                <input type="number" id="inputDesc" class="form-control" value="0" oninput="recalcular()">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-primary fw-bold">Preço Final Negociado</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="text" id="inputFinal" class="form-control fw-bold fs-5" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="small mb-1">Composição do Preço:</label>
+                            <div class="progress-stacked shadow-sm">
+                                <div id="barCusto" class="bar-segment bg-secondary" style="width: 70%" title="Custo">CUSTO</div>
+                                <div id="barLucro" class="bar-segment bg-success" style="width: 30%" title="Lucro">LUCRO</div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">Margem: <span id="txtMargemPct" class="fw-bold">0%</span></small>
+                                <small class="text-muted">Lucro Líquido: <span id="txtLucroLiq" class="fw-bold text-success">R$ 0,00</span></small>
+                            </div>
+                        </div>
+
+                        <div id="alertPrejuizo" class="alert alert-danger mt-3 py-2 small fw-bold text-center" style="display:none;">
+                            <i class="fas fa-hand-paper"></i> PARE! VENDA COM PREJUÍZO OPERACIONAL.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4 shadow-sm bg-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="far fa-credit-card"></i> Condições de Pagamento</h5>
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <select id="selParcelas" class="form-select" onchange="simularPgto()">
+                            <option value="1">À Vista (PIX)</option>
+                            <option value="3">3x Cartão (S/ Juros)</option>
+                            <option value="6">6x Cartão (Juros)</option>
+                            <option value="12">12x Cartão (Juros)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-9 text-end">
+                        <h4 class="text-primary m-0" id="txtSimulacao">...</h4>
+                        <small class="text-muted">Valor base para parcelamento: <span id="txtBaseParcela">R$ 0,00</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Recebe o JSON seguro do Python
+    const dadosPedidos = {{ pedidos_json|safe }};
+    let pedidoAtual = null;
+
+    const formatBRL = val => val.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+
+    function carregarPedido() {
+        const id = parseInt(document.getElementById('selectPedido').value);
+        pedidoAtual = dadosPedidos.find(p => p.id === id);
+
+        if (!pedidoAtual) {
+            document.getElementById('painel').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('painel').style.display = 'block';
+
+        // 1. Preenche Custos
+        document.getElementById('txtMat').innerText = formatBRL(pedidoAtual.custo_mat);
+        document.getElementById('txtMO').innerText = formatBRL(pedidoAtual.custo_mo);
+        document.getElementById('txtFrete').innerText = formatBRL(pedidoAtual.custo_frete);
+        document.getElementById('txtTaxas').innerText = formatBRL(pedidoAtual.custo_taxas);
+        document.getElementById('txtPontoEq').innerText = formatBRL(pedidoAtual.ponto_equilibrio);
+        document.getElementById('txtPrecoTabela').innerText = formatBRL(pedidoAtual.preco_tabela);
+
+        // 2. Alerta Estoque
+        const boxEstoque = document.getElementById('boxEstoque');
+        const lista = document.getElementById('listaFaltantes');
+        lista.innerHTML = '';
+
+        if (pedidoAtual.alertas_estoque && pedidoAtual.alertas_estoque.length > 0) {
+            boxEstoque.style.display = 'block';
+            pedidoAtual.alertas_estoque.forEach(msg => {
+                lista.innerHTML += `<li>${msg}</li>`;
+            });
+        } else {
+            boxEstoque.style.display = 'none';
+        }
+
+        // Reset Inputs
+        document.getElementById('inputDesc').value = 0;
+        recalcular();
+    }
+
+    function recalcular() {
+        if (!pedidoAtual) return;
+
+        const desconto = parseFloat(document.getElementById('inputDesc').value) || 0;
+        const precoFinal = pedidoAtual.preco_tabela - desconto;
+        const custoTotal = pedidoAtual.ponto_equilibrio;
+        const lucro = precoFinal - custoTotal;
+
+        // Atualiza UI Valores
+        document.getElementById('inputFinal').value = precoFinal.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        document.getElementById('txtBaseParcela').innerText = formatBRL(precoFinal);
+        document.getElementById('txtLucroLiq').innerText = formatBRL(lucro);
+
+        // Barras e Alertas
+        const pctCusto = Math.min((custoTotal / precoFinal) * 100, 100);
+        const pctLucro = 100 - pctCusto;
+
+        document.getElementById('barCusto').style.width = pctCusto + '%';
+        document.getElementById('barLucro').style.width = pctLucro + '%';
+
+        const alertPreju = document.getElementById('alertPrejuizo');
+        const txtLucro = document.getElementById('txtLucroLiq');
+
+        if (precoFinal < custoTotal) {
+            alertPreju.style.display = 'block';
+            document.getElementById('barLucro').className = 'bar-segment bg-danger'; // Barra vira vermelha
+            txtLucro.className = 'fw-bold text-danger';
+            document.getElementById('txtMargemPct').innerText = "NEGATIVA";
+        } else {
+            alertPreju.style.display = 'none';
+            document.getElementById('barLucro').className = 'bar-segment bg-success';
+            txtLucro.className = 'fw-bold text-success';
+            const margem = (lucro / precoFinal) * 100;
+            document.getElementById('txtMargemPct').innerText = margem.toFixed(1) + '%';
+        }
+
+        simularPgto(precoFinal);
+    }
+
+    function simularPgto(valorBase) {
+        if (!valorBase) valorBase = parseFloat(document.getElementById('inputFinal').value.replace(/\./g,'').replace(',','.'));
+
+        const parcelas = parseInt(document.getElementById('selParcelas').value);
+        let total = valorBase;
+        let obs = "";
+
+        if (parcelas === 1) {
+            obs = "(Sem Juros)";
+        } else if (parcelas <= 3) {
+            obs = "(Sem Juros)";
+        } else {
+            // Juros simples de exemplo (ajuste conforme sua maquininha)
+            const taxa = parcelas <= 6 ? 1.05 : 1.12;
+            total = valorBase * taxa;
+            obs = `(Total c/ Juros: ${formatBRL(total)})`;
+        }
+
+        const valParcela = total / parcelas;
+        document.getElementById('txtSimulacao').innerText = `${parcelas}x de ${formatBRL(valParcela)} ${obs}`;
+    }
+</script>
+
+</body>
+</html>

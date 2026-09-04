@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Helvetica, sans-serif; font-size: 12px; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        .section { margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ddd; padding: 5px; }
+        th { background-color: #eee; text-align: left; }
+        .text-right { text-align: right; }
+        .total-box { background-color: #f0f0f0; padding: 10px; text-align: right; border: 1px solid #ccc; margin-top: 20px; }
+        .big-price { font-size: 16px; font-weight: bold; color: #000; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ORÇAMENTO DE PRODUÇÃO (LOTE)</h1>
+        <p>Proposta #{{ pedido.id }} | Emissão: {% now "d/m/Y" %}</p>
+        <p>Cliente: <strong>{{ cliente.nome }}</strong> | Lote: <strong>{{ qtd_lote }} Unidades</strong></p>
+    </div>
+
+    <div class="section">
+        <h3>1. Materiais (Total para {{ qtd_lote }} peças)</h3>
+        <table>
+            <thead><tr><th>Item</th><th>Qtd Unit.</th><th>Qtd Total</th><th class="text-right">Custo Total</th></tr></thead>
+            <tbody>
+                {% for item in itens_materiais %}
+                <tr>
+                    <td>{{ item.nome }}</td>
+                    <td>{{ item.qtd_unitaria }} {{ item.unidade }}</td>
+                    <td>{{ item.qtd_total_lote }} {{ item.unidade }}</td>
+                    <td class="text-right">{{ item.custo_total_item }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">Nenhum material vinculado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h3>2. Serviços e Operacional (Total do Lote)</h3>
+        <table>
+            <thead><tr><th>Descrição</th><th>Detalhe</th><th class="text-right">Valor Total</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Mão de Obra</td>
+                    <td>{{ pedido.horas_estimadas }}h/peça x {{ qtd_lote }} pçs</td>
+                    <td class="text-right">{{ custo_mo }}</td>
+                </tr>
+                <tr>
+                    <td>Transporte/Frete</td>
+                    <td>R$ {{ pedido.custo_transporte }}/peça x {{ qtd_lote }}</td>
+                    <td class="text-right">{{ custo_trans }}</td>
+                </tr>
+                <tr>
+                    <td>Taxa Administrativa</td>
+                    <td>Rateio proporcional</td>
+                    <td class="text-right">{{ custo_fixo }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="total-box">
+        <div style="font-size: 10px; color: #666; margin-bottom: 5px;">
+            Custo Operacional Total: {{ custo_operacional_total }}
+        </div>
+        <div class="big-price">
+            TOTAL DO CONTRATO: {{ valor_final_orcamento }}
+        </div>
+        <br>
+        Sinal Pago: {{ sinal_pago }}<br>
+        <strong>Restante na Entrega: {{ restante_pagar }}</strong>
+    </div>
+
+    <div style="margin-top: 30px; font-size: 10px; color: #777;">
+        Este orçamento tem validade de 10 dias.<br>
+        Obs: {{ pedido.observacoes }}
+    </div>
+</body>
+</html>

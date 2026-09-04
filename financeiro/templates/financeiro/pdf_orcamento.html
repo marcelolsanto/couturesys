@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: Helvetica, sans-serif; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; }
+        .info-box { background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .total-box { border: 2px solid #333; padding: 20px; text-align: center; margin-top: 30px; }
+        .highlight { color: #0056b3; font-weight: bold; font-size: 1.2em; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Simulação de Pagamento</h1>
+        <p>CoutureSys - Atelier de Alta Costura</p>
+    </div>
+
+    <p><strong>Cliente:</strong> {{ cliente.nome }}</p>
+    <p><strong>Pedido nº:</strong> {{ pedido.id }}</p>
+    <p><strong>Data da Simulação:</strong> {{ data_emissao|date:"d/m/Y H:i" }}</p>
+
+    <div class="info-box">
+        <h3>Detalhes da Venda</h3>
+        <p>Valor Original do Pedido: R$ {{ pedido.valor_total }}</p>
+        <p>Descrição: {{ pedido.observacoes|linebreaksbr }}</p>
+    </div>
+
+    <div class="total-box">
+        <h3>Condição Selecionada: {{ metodo }}</h3>
+        <p class="highlight">{{ condicao }}</p>
+        <hr>
+        <h2>Valor Final: {{ valor_final }}</h2>
+    </div>
+
+    <p style="margin-top: 50px; font-size: 12px;">
+        * Esta simulação é válida por 7 dias.<br>
+        * O pagamento confirma a encomenda e reserva da data de entrega.
+    </p>
+
+    <div class="footer">
+        Gerado automaticamente por CoutureSys
+    </div>
+</body>
+</html>
