@@ -15,8 +15,28 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Em produção, liste apenas os domínios permitidos no .env (ex: meusite.com,www.meusite.com)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+# Em produção, liste os domínios permitidos no .env (ex: meusite.com,www.meusite.com)
+_raw_allowed = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,100.95.28.45,192.168.1.13,*', cast=Csv())
+ALLOWED_HOSTS = list(_raw_allowed)
+for host in ['localhost', '127.0.0.1', '100.95.28.45', '192.168.1.13', 'web']:
+    if host not in ALLOWED_HOSTS and '*' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
+
+# Origens confiáveis para CSRF (essencial para acessos remotos / Tailscale na porta 8001)
+_raw_csrf = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:8001,http://127.0.0.1:8001,http://100.95.28.45:8001,http://192.168.1.13:8001',
+    cast=Csv()
+)
+CSRF_TRUSTED_ORIGINS = list(_raw_csrf)
+for origin in [
+    'http://localhost:8001',
+    'http://127.0.0.1:8001',
+    'http://100.95.28.45:8001',
+    'http://192.168.1.13:8001',
+]:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 
 # Application definition
