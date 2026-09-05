@@ -29,11 +29,9 @@ fi
 echo "📦 [Docker] Aplicando migrações do Django..."
 python manage.py migrate --noinput
 
-# Coleta estáticos se não estiver em DEBUG
-if [ "$DEBUG" = "False" ] || [ "$DEBUG" = "false" ] || [ "$DEBUG" = "0" ]; then
-    echo "🎨 [Docker] Coletando arquivos estáticos..."
-    python manage.py collectstatic --noinput
-fi
+# Coleta estáticos para que o WhiteNoise / Gunicorn possa servi-los
+echo "🎨 [Docker] Coletando arquivos estáticos..."
+python manage.py collectstatic --noinput
 
 echo "✨ [Docker] Pronto para atender requisições!"
 
