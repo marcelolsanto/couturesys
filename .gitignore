@@ -22,9 +22,6 @@ media/
 staticfiles/
 static_collected/
 
-# Migrations (manter fora do repo para evitar conflitos de ambiente)
-# Se preferir versionar as migrations, remova as linhas abaixo:
-*/migrations/0*.py
 
 # ==============================================================================
 # Ambiente Virtual
