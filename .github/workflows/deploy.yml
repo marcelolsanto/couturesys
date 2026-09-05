@@ -28,7 +28,8 @@ jobs:
             fi
           fi
 
-          echo "🚀 Construindo e iniciando containers CoutureSys..."
+          echo "🚀 Ajustando permissões e construindo containers CoutureSys..."
+          chmod +x entrypoint.sh || true
           docker compose down || true
           docker compose up -d --build --force-recreate
 
